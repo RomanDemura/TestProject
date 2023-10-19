@@ -12,13 +12,19 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import tech.demura.testproject.domain.News
+import tech.demura.testproject.presentation.mainScreen.MainScreenState
+import tech.demura.testproject.presentation.mainScreen.MainScreenViewModel
 import tech.demura.testproject.presentation.newsListScreen.FeaturedNewsCard
 import tech.demura.testproject.presentation.newsListScreen.LatestNewsCard
 
 
-@Preview
 @Composable
-fun NewsListScreen() {
+fun NewsListScreen(
+    viewModel: MainScreenViewModel,
+    featuredNews: List<News>,
+    latestNews: List<News>
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -28,7 +34,6 @@ fun NewsListScreen() {
 
 // Featured news part
         Column() {
-
             Text(
                 text = "Featured",
                 fontSize = 24.sp,
@@ -37,9 +42,12 @@ fun NewsListScreen() {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+
             LazyRow() {
-                items(15) {
-                    FeaturedNewsCard()
+                items(featuredNews.size) {
+                    val news = featuredNews[it]
+                    FeaturedNewsCard(news, onClick = {viewModel.onClick(news)})
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
             }
         }
@@ -58,8 +66,9 @@ fun NewsListScreen() {
             Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn() {
-                items(30) {
-                    LatestNewsCard()
+                items(latestNews.size) {
+                    val news = latestNews[it]
+                    LatestNewsCard(news, onClick = { viewModel.onClick(news) })
                 }
             }
         }

@@ -1,6 +1,7 @@
 package tech.demura.testproject.presentation.newsListScreen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
 import androidx.compose.material.Text
@@ -11,19 +12,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.demura.testproject.R
+import tech.demura.testproject.domain.News
 
 @Composable
-fun LatestNewsCard() {
+fun LatestNewsCard(
+    news: News,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(96.dp)
+            .clickable { onClick() }
+
     ) {
-        Row(modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)) {
+        Row(modifier = Modifier.padding(top = 12.dp, bottom = 12.dp)) {
 
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_background),
+                painter = painterResource(id = news.imageId),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -37,7 +43,7 @@ fun LatestNewsCard() {
             ) {
 
                 Text(
-                    text = "We are processing your request...",
+                    text = news.title,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
