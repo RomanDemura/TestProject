@@ -1,28 +1,25 @@
 package tech.demura.testproject.presentation.mainScreen
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
-import tech.demura.testproject.presentation.NewsListScreen
+import tech.demura.testproject.presentation.navigation.AppNavGraph
+import tech.demura.testproject.presentation.navigation.rememberNavigationState
+import tech.demura.testproject.presentation.newsListScreen.NewsListScreen
 import tech.demura.testproject.presentation.newsScreen.NewsScreen
 
 @Composable
-fun MainScreen(
-    viewModel: MainScreenViewModel
-) {
-    val screenState = viewModel.screenState.observeAsState(MainScreenState.Initial)
-
-    when (val currentState = screenState.value) {
-        is MainScreenState.NewsListScreenState -> {
+fun MainScreen() {
+    val navigationState = rememberNavigationState()
+    AppNavGraph(
+        navHostController = navigationState.navHostController,
+        newsListScreenContent = {
             NewsListScreen(
-                viewModel = viewModel,
-                featuredNews = currentState.featuredNews,
-                latestNews = currentState.latestNews
+                onNewsClick = { navigationState.navigateToNews(it) })
+        },
+        newsScreenContent = { news ->
+            NewsScreen(
+                news = news,
+                onBackPressed = { navigationState.navHostController.popBackStack() }
             )
         }
-        is MainScreenState.NewsScreenState -> {
-            NewsScreen(currentState.news)
-        }
-        MainScreenState.Initial -> {}
-
-    }
+    )
 }

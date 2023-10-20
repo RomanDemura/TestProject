@@ -1,5 +1,6 @@
 package tech.demura.testproject.presentation.newsScreen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -18,8 +19,12 @@ import tech.demura.testproject.domain.News
 
 @Composable
 fun NewsScreen(
-    news: News
+    news: News,
+    onBackPressed: () -> Unit
 ) {
+    BackHandler {
+        onBackPressed()
+    }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
