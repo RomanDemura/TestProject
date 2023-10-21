@@ -1,4 +1,4 @@
-package tech.demura.testproject.presentation.newsListScreen
+package tech.demura.testproject.ui_layer.newsListScreen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -12,7 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.domain_layer.news.entites.News
 
 @Composable
 fun LatestNewsCard(

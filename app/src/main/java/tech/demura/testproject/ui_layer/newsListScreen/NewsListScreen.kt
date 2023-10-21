@@ -1,4 +1,4 @@
-package tech.demura.testproject.presentation.newsListScreen
+package tech.demura.testproject.ui_layer.newsListScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.domain_layer.news.entites.News
 
 
 @Composable
@@ -23,6 +23,8 @@ fun NewsListScreen(
     val viewModel: NewsListViewModel = viewModel()
     val screenState = viewModel.screenState.observeAsState(NewsListScreenState.Initial)
     val currentState = screenState.value
+
+    viewModel.getNews()
     if (currentState !is NewsListScreenState.NewsList) return
 
     Column(

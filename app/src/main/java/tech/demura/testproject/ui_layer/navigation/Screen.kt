@@ -1,8 +1,8 @@
-package tech.demura.testproject.presentation.navigation
+package tech.demura.testproject.ui_layer.navigation
 
 import android.net.Uri
 import com.google.gson.Gson
-import tech.demura.testproject.domain.News as domainNews
+import tech.demura.testproject.domain_layer.news.entites.News as domainNews
 
 sealed class Screen(
     val route: String

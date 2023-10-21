@@ -1,6 +1,6 @@
-package tech.demura.testproject.presentation.newsListScreen
+package tech.demura.testproject.ui_layer.newsListScreen
 
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.domain_layer.news.entites.News
 
 sealed class NewsListScreenState() {
     object Initial: NewsListScreenState()

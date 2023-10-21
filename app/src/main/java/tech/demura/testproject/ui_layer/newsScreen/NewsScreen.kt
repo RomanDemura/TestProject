@@ -1,4 +1,4 @@
-package tech.demura.testproject.presentation.newsScreen
+package tech.demura.testproject.ui_layer.newsScreen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -15,7 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.domain_layer.news.entites.News
 
 @Composable
 fun NewsScreen(

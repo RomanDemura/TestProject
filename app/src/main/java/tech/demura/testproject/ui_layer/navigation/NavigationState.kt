@@ -1,11 +1,11 @@
-package tech.demura.testproject.presentation.navigation
+package tech.demura.testproject.ui_layer.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.domain_layer.news.entites.News
 
 class NavigationState(
     val navHostController: NavHostController
