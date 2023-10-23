@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -46,12 +45,16 @@ fun NewsListScreen(
                     }
                 },
                 actions = {
-                        TextButton(onClick = {
-                            viewModel.markAllNews()
-                        }) {
-                            Text(text = stringResource(R.string.mark_all_read), color = Color.White)
-                        }
-                }
+                    TextButton(onClick = {
+                        viewModel.markAllNews()
+                    }) {
+                        Text(
+                            text = stringResource(R.string.mark_all_read),
+                            color = MaterialTheme.colors.onPrimary
+                        )
+                    }
+                },
+                backgroundColor = MaterialTheme.colors.primary
             )
         }
     ) { paddingValues ->
@@ -59,7 +62,7 @@ fun NewsListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Color.White)
+                .background(color = MaterialTheme.colors.background)
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
@@ -83,7 +86,7 @@ fun FeaturedNews(
 ) {
     Column() {
         Text(
-            text = "Featured",
+            text = stringResource(R.string.featured),
             fontSize = 24.sp,
             fontStyle = FontStyle.Italic,
             maxLines = 1
@@ -111,7 +114,7 @@ fun LatestNews(
     Column(modifier = Modifier.fillMaxSize()) {
 
         Text(
-            text = "Latest news",
+            text = stringResource(R.string.latest_news),
             fontStyle = FontStyle.Italic,
             fontSize = 24.sp,
             maxLines = 1
@@ -122,6 +125,7 @@ fun LatestNews(
             items(latestNews.size) {
                 val news = latestNews[it]
                 LatestNewsCard(news, onClick = { onNewsClick(news) })
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
