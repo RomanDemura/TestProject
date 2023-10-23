@@ -9,11 +9,13 @@ import tech.demura.testproject.ui_layer.newsScreen.NewsScreen
 @Composable
 fun MainScreen() {
     val navigationState = rememberNavigationState()
+
     AppNavGraph(
         navHostController = navigationState.navHostController,
         newsListScreenContent = {
             NewsListScreen(
-                onNewsClick = { navigationState.navigateToNews(it) })
+                onNewsClick = { navigationState.navigateToNews(it) }
+            )
         },
         newsScreenContent = { news ->
             NewsScreen(
@@ -23,3 +25,4 @@ fun MainScreen() {
         }
     )
 }
+

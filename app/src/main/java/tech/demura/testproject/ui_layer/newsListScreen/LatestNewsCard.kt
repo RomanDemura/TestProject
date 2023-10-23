@@ -7,6 +7,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -23,7 +24,12 @@ fun LatestNewsCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(96.dp)
-            .clickable { onClick() }
+            .clickable { onClick() },
+        backgroundColor = if (news.isViewed){
+            Color.DarkGray.copy(alpha = 0.5f)
+        } else {
+            Color.DarkGray
+        }
 
     ) {
         Row(modifier = Modifier.padding(top = 12.dp, bottom = 12.dp)) {
@@ -43,7 +49,7 @@ fun LatestNewsCard(
             ) {
 
                 Text(
-                    text = news.title,
+                    text = "${news.title} ${news.isViewed}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),

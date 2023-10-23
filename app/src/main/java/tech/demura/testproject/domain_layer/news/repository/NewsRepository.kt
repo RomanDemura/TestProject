@@ -5,11 +5,18 @@ import tech.demura.testproject.domain_layer.news.entites.News
 
 interface NewsRepository {
 
-    fun addNews(news: News, key: String)
+    fun addFeaturedNews(news: News)
+    fun addLatestNews(news: News)
 
-    fun getNews(id: Int): News
+    fun getFeaturedNews(id: Int): News
+    fun getLatestNews(id: Int): News
 
-    fun getFeaturedNews(): LiveData<List<News>>
+    fun markFeaturedNews(id: Int)
+    fun markLatestNews(id: Int)
 
-    fun getLatestNews(): LiveData<List<News>>
+    fun markAllNews()
+
+    fun getAllFeaturedNews(): LiveData<List<News>>
+
+    fun getAllLatestNews(): LiveData<List<News>>
 }
