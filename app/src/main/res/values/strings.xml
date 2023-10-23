@@ -3,4 +3,6 @@
     <string name="news">News</string>
     <string name="news_list">News list</string>
     <string name="mark_all_read">mark all read</string>
+    <string name="latest_news">Latest news</string>
+    <string name="featured">Featured</string>
 </resources>

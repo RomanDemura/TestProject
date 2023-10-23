@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,7 +27,7 @@ fun FeaturedNewsCard(
 ) {
     Card(
         modifier = Modifier
-            .size(320.dp)
+            .size(220.dp)
             .clickable { onClick() },
         elevation = 8.dp,
         border = BorderStroke(1.dp, Color.DarkGray)
@@ -46,13 +47,13 @@ fun FeaturedNewsCard(
                 maxLines = 3,
                 modifier = Modifier.padding(15.dp),
                 fontFamily = FontFamily.Serif,
-                fontSize = 36.sp,
-                color = Color.White,
+                fontSize = 24.sp,
+                color = MaterialTheme.colors.surface,
                 style = TextStyle(
                     shadow = Shadow(
-                        color = Color.DarkGray,
-                        offset = Offset(3f, 13f),
-                        blurRadius = 4f
+                        color = MaterialTheme.colors.onSurface,
+                        offset = Offset(0f, 0f),
+                        blurRadius = 12f
                     )
                 )
 
