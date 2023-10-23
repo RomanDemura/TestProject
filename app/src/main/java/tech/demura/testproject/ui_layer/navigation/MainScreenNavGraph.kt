@@ -1,4 +1,4 @@
-package tech.demura.testproject.presentation.navigation
+package tech.demura.testproject.ui_layer.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
@@ -7,7 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.google.gson.Gson
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.domain_layer.news.entites.News
 
 fun NavGraphBuilder.MainScreenNavGraph(
     newsListScreenContent: @Composable () -> Unit,

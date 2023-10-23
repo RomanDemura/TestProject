@@ -1,19 +1,23 @@
-package tech.demura.testproject.presentation.newsListScreen
+package tech.demura.testproject.ui_layer.newsListScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.R
+import tech.demura.testproject.domain_layer.news.entites.News
 
 
 @Composable
@@ -23,17 +27,52 @@ fun NewsListScreen(
     val viewModel: NewsListViewModel = viewModel()
     val screenState = viewModel.screenState.observeAsState(NewsListScreenState.Initial)
     val currentState = screenState.value
+
+    viewModel.getNews()
     if (currentState !is NewsListScreenState.NewsList) return
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.White)
-            .padding(16.dp)
-    ) {
-        FeaturedNews(featuredNews = currentState.featuredNews, onNewsClick = onNewsClick)
-        Spacer(modifier = Modifier.height(16.dp))
-        LatestNews(latestNews = currentState.latestNews, onNewsClick = onNewsClick)
+    val featuredNews = viewModel.featuredNewsLD.observeAsState(listOf())
+    val latestNews = viewModel.latestNewsLD.observeAsState(listOf())
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(text = stringResource(id = R.string.news_list))
+                },
+                navigationIcon = {
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Filled.Menu, contentDescription = null)
+                    }
+                },
+                actions = {
+                        TextButton(onClick = {
+                            viewModel.markAllNews()
+                        }) {
+                            Text(text = stringResource(R.string.mark_all_read), color = Color.White)
+                        }
+                }
+            )
+        }
+    ) { paddingValues ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color.White)
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            FeaturedNews(featuredNews = featuredNews.value, onNewsClick = {
+                viewModel.markFeaturedNews(it)
+                onNewsClick(it)
+            })
+            Spacer(modifier = Modifier.height(16.dp))
+            LatestNews(latestNews = latestNews.value, onNewsClick = {
+                viewModel.markLatestNews(it)
+                onNewsClick(it)
+            })
+        }
     }
 }
 
@@ -54,7 +93,10 @@ fun FeaturedNews(
         LazyRow() {
             items(featuredNews.size) {
                 val news = featuredNews[it]
-                FeaturedNewsCard(news, onClick = { onNewsClick(news) })
+                FeaturedNewsCard(news, onClick = {
+
+                    onNewsClick(news)
+                })
                 Spacer(modifier = Modifier.width(16.dp))
             }
         }

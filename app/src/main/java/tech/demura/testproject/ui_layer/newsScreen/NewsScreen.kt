@@ -1,21 +1,24 @@
-package tech.demura.testproject.presentation.newsScreen
+package tech.demura.testproject.ui_layer.newsScreen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Card
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.demura.testproject.domain.News
+import tech.demura.testproject.R
+import tech.demura.testproject.domain_layer.news.entites.News
 
 @Composable
 fun NewsScreen(
@@ -25,9 +28,36 @@ fun NewsScreen(
     BackHandler {
         onBackPressed()
     }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(text = stringResource(R.string.news))
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onBackPressed() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = null)
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        News(
+            news = news,
+            paddingValues = paddingValues
+        )
+    }
+}
+
+@Composable
+fun News(news: News, paddingValues: PaddingValues) {
+
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .padding(paddingValues)
     ) {
 
 // Image part
