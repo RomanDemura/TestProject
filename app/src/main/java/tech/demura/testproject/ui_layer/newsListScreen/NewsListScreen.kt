@@ -40,7 +40,7 @@ fun NewsListScreen(
                     Text(text = stringResource(id = R.string.news_list))
                 },
                 navigationIcon = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {}, enabled = false) {
                         Icon(Icons.Filled.Menu, contentDescription = null)
                     }
                 },
@@ -71,10 +71,13 @@ fun NewsListScreen(
                 onNewsClick(it)
             })
             Spacer(modifier = Modifier.height(16.dp))
-            LatestNews(latestNews = latestNews.value, onNewsClick = {
-                viewModel.markLatestNews(it)
-                onNewsClick(it)
-            })
+            LatestNews(
+                latestNews = latestNews.value,
+                publishTime = { viewModel.getPublishTime(it) },
+                onNewsClick = {
+                    viewModel.markLatestNews(it)
+                    onNewsClick(it)
+                })
         }
     }
 }
@@ -109,6 +112,7 @@ fun FeaturedNews(
 @Composable
 fun LatestNews(
     latestNews: List<News>,
+    publishTime: (News) -> String,
     onNewsClick: (news: News) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -124,7 +128,10 @@ fun LatestNews(
         LazyColumn() {
             items(latestNews.size) {
                 val news = latestNews[it]
-                LatestNewsCard(news, onClick = { onNewsClick(news) })
+                LatestNewsCard(
+                    publishTime = publishTime(news),
+                    news = news,
+                    onClick = { onNewsClick(news) })
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }

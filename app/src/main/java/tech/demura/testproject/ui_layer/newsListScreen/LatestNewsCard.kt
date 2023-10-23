@@ -20,6 +20,7 @@ import tech.demura.testproject.domain_layer.news.entites.News
 @Composable
 fun LatestNewsCard(
     news: News,
+    publishTime: String,
     onClick: () -> Unit
 ) {
     val backgroundColor =
@@ -37,9 +38,11 @@ fun LatestNewsCard(
         elevation = 4.dp,
         backgroundColor = backgroundColor
     ) {
-        Row(modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 12.dp, bottom = 12.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 12.dp, bottom = 12.dp)
+        ) {
 
             Image(
                 painter = painterResource(id = news.imageId),
@@ -56,7 +59,7 @@ fun LatestNewsCard(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = "${news.title} ${news.isViewed}",
+                    text = news.title,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
@@ -66,7 +69,7 @@ fun LatestNewsCard(
                     fontStyle = FontStyle.Italic
                 )
                 Text(
-                    text = "1 hour ago",
+                    text = publishTime,
                     modifier = Modifier.padding(),
                     color = MaterialTheme.colors.onSecondary
                 )
@@ -74,3 +77,4 @@ fun LatestNewsCard(
         }
     }
 }
+
