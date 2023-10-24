@@ -8,6 +8,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,7 +28,9 @@ fun NewsListScreen(
     val screenState = viewModel.screenState.observeAsState(NewsListScreenState.Initial)
     val currentState = screenState.value
 
-    viewModel.getNews()
+    LaunchedEffect(key1 = true){
+        viewModel.getNews()
+    }
     if (currentState !is NewsListScreenState.NewsList) return
 
     val featuredNews = viewModel.featuredNewsLD.observeAsState(listOf())
@@ -89,7 +92,7 @@ fun FeaturedNews(
 ) {
     Column() {
         Text(
-            text = stringResource(R.string.featured),
+            text = stringResource(R.string.featured_news),
             fontSize = 24.sp,
             fontStyle = FontStyle.Italic,
             maxLines = 1

@@ -1,32 +1,35 @@
-package tech.demura.testproject.data_layer
+package tech.demura.testproject.data_layer.repository
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import tech.demura.testproject.R
+import tech.demura.testproject.data_layer.cat_fact_api.mapper.CatFactMapper
+import tech.demura.testproject.data_layer.cat_fact_api.network.CatFactApiFactory
+import tech.demura.testproject.data_layer.cat_image_api.mapper.CatImageMapper
+import tech.demura.testproject.data_layer.cat_image_api.network.CatImageApiFactory
 import tech.demura.testproject.domain_layer.news.entites.News
 import tech.demura.testproject.domain_layer.news.repository.NewsRepository
 import kotlin.random.Random
 
 object NewsRepositoryImpl : NewsRepository {
 
+    private val catFactApiService = CatFactApiFactory.apiService
+    private val catFactMapper = CatFactMapper()
+
+    private val catImageApiService = CatImageApiFactory.apiService
+    private val catImageMapper = CatImageMapper()
+
+    private var autoIncrement = 0
+
     val featuredNewsLD = MutableLiveData<List<News>>()
-    val featuredNewsSet = sortedSetOf<News>({o1, o2 -> o1.id.compareTo(o2.id)})
+    val featuredNewsSet = sortedSetOf<News>({ o1, o2 -> o1.id.compareTo(o2.id) })
 
     val latestNewsLD = MutableLiveData<List<News>>()
-    val latestNewsSet = sortedSetOf<News>({o1, o2 -> o1.id.compareTo(o2.id)})
+    val latestNewsSet =
+        sortedSetOf<News>({ o1, o2 -> o2.publishedDate.compareTo(o1.publishedDate) })
 
     init {
-        repeat(30) {
-            val news = News(
-                id = it,
-                title = getRandomTitle(),
-                text = getRandomText(),
-                imageId = getRandomImage(),
-                publishedDate = getRandomPublishDate()
-            )
-            addFeaturedNews(news = news)
-        }
-        repeat(30) {
+        repeat(50) {
             val news = News(
                 id = it,
                 title = getRandomTitle(),
@@ -38,6 +41,20 @@ object NewsRepositoryImpl : NewsRepository {
         }
     }
 
+    suspend fun getRandomCatFact(): News {
+        val catFactResponse = catFactApiService.getRandomCatFact()
+        val catImageResponse = catImageApiService.getRandomCatImage()
+        val catImageUrl = catImageMapper.mapResponseToUrl(catImageResponse)
+        val news = catFactMapper.mapResponseToNews(catFactResponse)
+            .copy(
+                id = autoIncrement++,
+                publishedDate = getRandomPublishDate(),
+                imageId = getRandomImage(),
+                imageUrl = catImageUrl
+            )
+        addFeaturedNews(news = news)
+        return news
+    }
 
     private fun updateFeaturedLD() {
         featuredNewsLD.value = featuredNewsSet.toList()
@@ -115,8 +132,8 @@ object NewsRepositoryImpl : NewsRepository {
     }
 
 
-    private fun getRandomImage(): Int{
-        return when (Random.nextInt(0, 7)){
+    private fun getRandomImage(): Int {
+        return when (Random.nextInt(0, 7)) {
             0 -> R.drawable.img_0
             1 -> R.drawable.img_1
             2 -> R.drawable.img_2
@@ -128,12 +145,12 @@ object NewsRepositoryImpl : NewsRepository {
         }
     }
 
-    private fun getRandomPublishDate(): Long{
+    private fun getRandomPublishDate(): Long {
         return System.currentTimeMillis() - Random.nextLong(1000, 100000000)
     }
 
-    private fun getRandomTitle(): String{
-        return when(Random.nextInt(0, 7)){
+    private fun getRandomTitle(): String {
+        return when (Random.nextInt(0, 7)) {
             0 -> "Nullam ac lacus eget justo vulputate tempor."
             1 -> "Cras blandit nibh."
             2 -> "Duis lacinia vel lectus porta sodales. Vestibulum ut malesuada metus."
@@ -144,8 +161,9 @@ object NewsRepositoryImpl : NewsRepository {
             else -> "Lorem Ipsum.."
         }
     }
-    private fun getRandomText(): String{
-        return when(Random.nextInt(0, 2)){
+
+    private fun getRandomText(): String {
+        return when (Random.nextInt(0, 2)) {
             0 -> "Suspendisse scelerisque arcu nibh, a viverra velit venenatis vulputate. Quisque a ipsum rutrum, venenatis mi nec, hendrerit nisi. Nullam magna magna, tempor id tellus id, euismod dictum sem. Nunc at pulvinar velit. Integer et vulputate nibh. Pellentesque sodales non erat fermentum accumsan. Quisque sed risus tincidunt, consectetur sapien eu, sodales odio. Sed varius, ex quis dictum finibus, orci justo laoreet libero, ac venenatis ligula dui in ex. Praesent varius venenatis nunc sit amet maximus. Vivamus nec leo sed purus egestas sodales.\n" +
                     "\n" +
                     "Quisque nec lectus ante. Maecenas tempor nisi sodales tempor vulputate. Maecenas consectetur erat sed elit dapibus semper. Maecenas sed rutrum odio, a viverra nibh. In id ipsum non sapien mattis rutrum vitae sit amet enim. Fusce commodo dapibus augue, in dapibus nunc consectetur eget. Morbi volutpat nibh ac malesuada efficitur. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Praesent quis tempus elit.\n" +
