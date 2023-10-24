@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -91,10 +92,10 @@ fun News(news: News, paddingValues: PaddingValues) {
                             .padding(16.dp),
                         fontFamily = FontFamily.Serif,
                         fontSize = 32.sp,
-                        color = MaterialTheme.colors.primary,
+                        color = Color.White,
                         style = TextStyle(
                             shadow = Shadow(
-                                color = MaterialTheme.colors.onPrimary,
+                                color = Color.Black,
                                 offset = Offset(0f, 0f),
                                 blurRadius = 12f
                             )
