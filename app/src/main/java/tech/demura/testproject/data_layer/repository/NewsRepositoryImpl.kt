@@ -11,11 +11,6 @@ import tech.demura.testproject.domain_layer.news.repository.NewsRepository
 import kotlin.random.Random
 
 object NewsRepositoryImpl : NewsRepository {
-//    val options = TranslatorOptions.Builder()
-//        .setSourceLanguage(TranslateLanguage.ENGLISH)
-//        .setTargetLanguage(TranslateLanguage.RUSSIAN)
-//        .build()
-//    val englishRussianTranslator = Translation.getClient(options)
 
     private val catFactApiService = CatFactApiFactory.apiService
     private val catFactMapper = CatFactMapper()
@@ -52,7 +47,7 @@ object NewsRepositoryImpl : NewsRepository {
         return news
     }
 
-    suspend fun loadLatestNews(): List<News> {
+    fun loadLatestNews(): List<News> {
         val news = News(
             id = latestNewsAutoIncrement++,
             title = getRandomTitle(),
@@ -102,14 +97,14 @@ object NewsRepositoryImpl : NewsRepository {
     }
 
     private fun markAllFeaturedNews() {
-        val featuredList = featuredNews
+        val featuredList = featuredNews.toList()
         featuredList.forEach {
             markFeaturedNews(it.id)
         }
     }
 
     private fun markAllLatestNews() {
-        val latestList = latestNews
+        val latestList = latestNews.toList()
         latestList.forEach {
             markLatestNews(it.id)
         }

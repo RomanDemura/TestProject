@@ -41,52 +41,55 @@ class NewsListViewModel : ViewModel() {
 
     private fun loadFeaturedNews() {
         viewModelScope.launch {
-            val featuredNews = repository.loadCatFacts()
-            _featuredNewsState.value =
-                NewsListFeaturedState.FeaturedNews(
-                    featuredNews = featuredNews,
-                    featuredNewsIsLoading = false
-                )
+            repository.loadCatFacts()
+            updateFeaturedNewsState(false)
         }
     }
 
     private fun loadLatestNews() {
         viewModelScope.launch {
-            val latestNews = repository.loadLatestNews()
-            _latestNewsState.value =
-                NewsListLatestState.LatestNews(
-                    latestNews = latestNews,
-                    latestNewsIsLoading = false
-                )
+            repository.loadLatestNews()
+            updateLatestNewsState(false)
         }
     }
 
     fun loadNextFeaturedNews() {
-        _featuredNewsState.value = NewsListFeaturedState.FeaturedNews(
-            featuredNews = repository.featuredNews,
-            featuredNewsIsLoading = true
-        )
+        updateFeaturedNewsState(true)
         loadFeaturedNews()
     }
 
     fun loadNextLatestdNews() {
-        _latestNewsState.value = NewsListLatestState.LatestNews(
-            latestNews = repository.latestNews,
-            latestNewsIsLoading = true
-        )
+        updateLatestNewsState(true)
         loadLatestNews()
     }
 
     fun markFeaturedNews(news: News) {
         markFeaturedNewsUseCase.markNews(news.id)
+        updateFeaturedNewsState(false)
     }
 
     fun markLatestNews(news: News) {
         markLatestNewsUseCase.markNews(news.id)
+        updateLatestNewsState(false)
     }
 
     fun markAllNews() {
         markAllNewsUseCase.markAllNews()
+        updateLatestNewsState(false)
+    }
+
+    private fun updateFeaturedNewsState(isLoading: Boolean) {
+        _featuredNewsState.value = NewsListFeaturedState.FeaturedNews(
+            featuredNews = repository.featuredNews.sortedBy { it.id },
+            featuredNewsIsLoading = isLoading
+        )
+    }
+
+    private fun updateLatestNewsState(isLoading: Boolean) {
+        _latestNewsState.value = NewsListLatestState.LatestNews(
+            latestNews = repository.latestNews.sortedBy { it.id },
+            latestNewsIsLoading = isLoading
+        )
     }
 
     fun getPublishTime(news: News): String {
