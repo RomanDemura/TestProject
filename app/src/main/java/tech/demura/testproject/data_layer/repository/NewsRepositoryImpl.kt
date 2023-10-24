@@ -1,7 +1,6 @@
 package tech.demura.testproject.data_layer.repository
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import tech.demura.testproject.R
 import tech.demura.testproject.data_layer.cat_fact_api.mapper.CatFactMapper
 import tech.demura.testproject.data_layer.cat_fact_api.network.CatFactApiFactory
@@ -12,6 +11,11 @@ import tech.demura.testproject.domain_layer.news.repository.NewsRepository
 import kotlin.random.Random
 
 object NewsRepositoryImpl : NewsRepository {
+//    val options = TranslatorOptions.Builder()
+//        .setSourceLanguage(TranslateLanguage.ENGLISH)
+//        .setTargetLanguage(TranslateLanguage.RUSSIAN)
+//        .build()
+//    val englishRussianTranslator = Translation.getClient(options)
 
     private val catFactApiService = CatFactApiFactory.apiService
     private val catFactMapper = CatFactMapper()
@@ -19,70 +23,65 @@ object NewsRepositoryImpl : NewsRepository {
     private val catImageApiService = CatImageApiFactory.apiService
     private val catImageMapper = CatImageMapper()
 
-    private var autoIncrement = 0
+    private var featuredNewsAutoIncrement = 0
+    private var latestNewsAutoIncrement = 0
 
-    val featuredNewsLD = MutableLiveData<List<News>>()
-    val featuredNewsSet = sortedSetOf<News>({ o1, o2 -> o1.id.compareTo(o2.id) })
+    private val _featuredNews = mutableListOf<News>()
+    val featuredNews: List<News> = _featuredNews
 
-    val latestNewsLD = MutableLiveData<List<News>>()
-    val latestNewsSet =
-        sortedSetOf<News>({ o1, o2 -> o2.publishedDate.compareTo(o1.publishedDate) })
+    private val _latestNewsList = mutableListOf<News>()
+    val latestNews: List<News> = _latestNewsList
 
-    init {
-        repeat(50) {
-            val news = News(
-                id = it,
-                title = getRandomTitle(),
-                text = getRandomText(),
-                imageId = getRandomImage(),
-                publishedDate = getRandomPublishDate()
-            )
-            addLatestNews(news = news)
-        }
+    suspend fun loadCatFacts(): List<News> {
+        val news = getRandomCatFact()
+        addFeaturedNews(news = news)
+        return featuredNews
     }
 
     suspend fun getRandomCatFact(): News {
         val catFactResponse = catFactApiService.getRandomCatFact()
         val catImageResponse = catImageApiService.getRandomCatImage()
+
         val catImageUrl = catImageMapper.mapResponseToUrl(catImageResponse)
-        val news = catFactMapper.mapResponseToNews(catFactResponse)
-            .copy(
-                id = autoIncrement++,
-                publishedDate = getRandomPublishDate(),
-                imageId = getRandomImage(),
-                imageUrl = catImageUrl
-            )
-        addFeaturedNews(news = news)
+
+        val news = catFactMapper.mapResponseToNews(catFactResponse).copy(
+            id = featuredNewsAutoIncrement++,
+            imageId = getRandomImage(),
+            imageUrl = catImageUrl
+        )
         return news
     }
 
-    private fun updateFeaturedLD() {
-        featuredNewsLD.value = featuredNewsSet.toList()
-    }
-
-    private fun updateLatestLD() {
-        latestNewsLD.value = latestNewsSet.toList()
+    suspend fun loadLatestNews(): List<News> {
+        val news = News(
+            id = latestNewsAutoIncrement++,
+            title = getRandomTitle(),
+            text = getRandomText(),
+            imageId = getRandomImage(),
+            publishedDate = getPublishDate()
+        )
+        addLatestNews(news = news)
+        return latestNews
     }
 
     override fun addFeaturedNews(news: News) {
-        featuredNewsSet.add(news)
-        updateFeaturedLD()
+        _featuredNews.add(news)
     }
 
     override fun addLatestNews(news: News) {
-        latestNewsSet.add(news)
-        updateLatestLD()
+        _latestNewsList.add(news)
     }
 
+
     override fun getFeaturedNews(id: Int): News {
-        val news = featuredNewsSet.find {
+        val news = _featuredNews.find {
             it.id == id
-        } ?: throw RuntimeException("Invalid featured news id: $id")
+        } ?: throw RuntimeException("Invalid latest news id: $id")
         return news
     }
 
     override fun getLatestNews(id: Int): News {
-        val news = latestNewsSet.find {
+        val news = _latestNewsList.find {
             it.id == id
         } ?: throw RuntimeException("Invalid latest news id: $id")
         return news
@@ -90,29 +89,27 @@ object NewsRepositoryImpl : NewsRepository {
 
     override fun markFeaturedNews(id: Int) {
         var news = getFeaturedNews(id)
-        featuredNewsSet.remove(news)
+        _featuredNews.remove(news)
         news = news.copy(isViewed = true)
         addFeaturedNews(news = news)
-        updateFeaturedLD()
     }
 
     override fun markLatestNews(id: Int) {
         var news = getLatestNews(id)
-        latestNewsSet.remove(news)
+        _latestNewsList.remove(news)
         news = news.copy(isViewed = true)
         addLatestNews(news = news)
-        updateLatestLD()
     }
 
     private fun markAllFeaturedNews() {
-        val featuredList = featuredNewsSet.toList()
+        val featuredList = featuredNews
         featuredList.forEach {
             markFeaturedNews(it.id)
         }
     }
 
     private fun markAllLatestNews() {
-        val latestList = latestNewsSet.toList()
+        val latestList = latestNews
         latestList.forEach {
             markLatestNews(it.id)
         }
@@ -124,11 +121,11 @@ object NewsRepositoryImpl : NewsRepository {
     }
 
     override fun getAllFeaturedNews(): LiveData<List<News>> {
-        return featuredNewsLD
+        TODO("Not yet implemented")
     }
 
     override fun getAllLatestNews(): LiveData<List<News>> {
-        return latestNewsLD
+        TODO("Not yet implemented")
     }
 
 
@@ -145,8 +142,8 @@ object NewsRepositoryImpl : NewsRepository {
         }
     }
 
-    private fun getRandomPublishDate(): Long {
-        return System.currentTimeMillis() - Random.nextLong(1000, 100000000)
+    private fun getPublishDate(): Long {
+        return System.currentTimeMillis() - (10000 * latestNewsAutoIncrement)
     }
 
     private fun getRandomTitle(): String {

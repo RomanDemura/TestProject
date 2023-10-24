@@ -12,39 +12,69 @@ import tech.demura.testproject.domain_layer.news.use_case.*
 
 
 class NewsListViewModel : ViewModel() {
+//    private val getAllFeaturedNewsUseCase = getAllFeaturedNewsUseCase(repository)
+//    private val getAllLatestNewsUseCase = getAllLatestNewsUseCase(repository)
+//
+//    private val featuredNews = getAllFeaturedNewsUseCase.getAllNews()
+//    private val latestNews = getAllLatestNewsUseCase.getAllNews()
+
+    private val _featuredNewsState =
+        MutableLiveData<NewsListFeaturedState>(NewsListFeaturedState.Initial)
+    val featuredNewsState: LiveData<NewsListFeaturedState> = _featuredNewsState
+
+    private val _latestNewsState =
+        MutableLiveData<NewsListLatestState>(NewsListLatestState.Initial)
+    val latestNewsState: LiveData<NewsListLatestState> = _latestNewsState
 
     private val repository = NewsRepositoryImpl
-
-    lateinit var featuredNewsLD: LiveData<List<News>>
-    lateinit var latestNewsLD: LiveData<List<News>>
-
-    private val getAllFeaturedNewsUseCase = getAllFeaturedNewsUseCase(repository)
-    private val getAllLatestNewsUseCase = getAllLatestNewsUseCase(repository)
-
-    private val featuredNews = getAllFeaturedNewsUseCase.getAllNews()
-    private val latestNews = getAllLatestNewsUseCase.getAllNews()
 
     private val markFeaturedNewsUseCase = markFeaturedNewsUseCase(repository)
     private val markLatestNewsUseCase = markLatestNewsUseCase(repository)
     private val markAllNewsUseCase = markAllNewsUseCase(repository)
 
-    private val _screenState = MutableLiveData<NewsListScreenState>(NewsListScreenState.Initial)
-    val screenState: LiveData<NewsListScreenState> = _screenState
+    init {
+        _latestNewsState.value = NewsListLatestState.Loading
+        loadLatestNews()
+        _featuredNewsState.value = NewsListFeaturedState.Loading
+        loadFeaturedNews()
+    }
 
-    fun getNews() {
+    private fun loadFeaturedNews() {
         viewModelScope.launch {
-            repeat(10) {
-                repository.getRandomCatFact()
-            }
+            val featuredNews = repository.loadCatFacts()
+            _featuredNewsState.value =
+                NewsListFeaturedState.FeaturedNews(
+                    featuredNews = featuredNews,
+                    featuredNewsIsLoading = false
+                )
         }
+    }
 
-        featuredNewsLD = featuredNews
-        latestNewsLD = latestNews
+    private fun loadLatestNews() {
+        viewModelScope.launch {
+            val latestNews = repository.loadLatestNews()
+            _latestNewsState.value =
+                NewsListLatestState.LatestNews(
+                    latestNews = latestNews,
+                    latestNewsIsLoading = false
+                )
+        }
+    }
 
-        _screenState.value = NewsListScreenState.NewsList(
-            featuredNews = featuredNews,
-            latestNews = latestNews
+    fun loadNextFeaturedNews() {
+        _featuredNewsState.value = NewsListFeaturedState.FeaturedNews(
+            featuredNews = repository.featuredNews,
+            featuredNewsIsLoading = true
         )
+        loadFeaturedNews()
+    }
+
+    fun loadNextLatestdNews() {
+        _latestNewsState.value = NewsListLatestState.LatestNews(
+            latestNews = repository.latestNews,
+            latestNewsIsLoading = true
+        )
+        loadLatestNews()
     }
 
     fun markFeaturedNews(news: News) {
