@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import tech.demura.testproject.R
 import tech.demura.testproject.domain_layer.news.entites.News
 
@@ -74,12 +75,21 @@ fun News(news: News, paddingValues: PaddingValues) {
                 shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp),
                 elevation = 4.dp
             ) {
-                Image(
-                    modifier = Modifier.fillMaxSize(),
-                    painter = painterResource(id = news.imageId),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop
-                )
+                if (news.imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = news.imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        modifier = Modifier.fillMaxSize(),
+                        painter = painterResource(id = news.imageId),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Bottom
