@@ -1,6 +1,8 @@
 package tech.demura.testproject.data_layer.repository
 
-import androidx.lifecycle.LiveData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import tech.demura.testproject.R
 import tech.demura.testproject.data_layer.cat_fact_api.mapper.CatFactMapper
 import tech.demura.testproject.data_layer.cat_fact_api.network.CatFactApiFactory
@@ -8,122 +10,142 @@ import tech.demura.testproject.data_layer.cat_image_api.mapper.CatImageMapper
 import tech.demura.testproject.data_layer.cat_image_api.network.CatImageApiFactory
 import tech.demura.testproject.domain_layer.news.entites.News
 import tech.demura.testproject.domain_layer.news.repository.NewsRepository
+import tech.demura.testproject.extensions.mergeWith
 import kotlin.random.Random
 
 object NewsRepositoryImpl : NewsRepository {
 
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+
+    // RETROFIT
     private val catFactApiService = CatFactApiFactory.apiService
     private val catFactMapper = CatFactMapper()
 
     private val catImageApiService = CatImageApiFactory.apiService
     private val catImageMapper = CatImageMapper()
 
-    private var featuredNewsAutoIncrement = 0
-    private var latestNewsAutoIncrement = 0
-
-    private val _featuredNews = mutableListOf<News>()
-    val featuredNews: List<News> = _featuredNews
+    // NEWS CONTAINERS
+    private val _featuredNewsList = mutableListOf<News>()
+    private val featuredNews: List<News>
+        get() = _featuredNewsList.toList()
 
     private val _latestNewsList = mutableListOf<News>()
-    val latestNews: List<News> = _latestNewsList
+    val latestNews: List<News>
+        get() = _latestNewsList.toList()
 
-    suspend fun loadCatFacts(): List<News> {
-        val news = getRandomCatFact()
-        addFeaturedNews(news = news)
-        return featuredNews
+
+    // FEATURED NEWS FLOW
+    private val nextFeaturedNewsNeededEvents = MutableSharedFlow<Unit>(replay = 1)
+    private val refreshedFeaturedNewsFlow = MutableSharedFlow<List<News>>()
+    private val loadedFeaturedNewsListFlow = flow {
+        nextFeaturedNewsNeededEvents.emit(Unit)
+        nextFeaturedNewsNeededEvents.collect {
+            val news = getRandomCatFact()
+            addFeaturedNews(news)
+            emit(featuredNews)
+        }
+    }
+    val featuredNewsFlow: StateFlow<List<News>> = loadedFeaturedNewsListFlow
+        .mergeWith(refreshedFeaturedNewsFlow)
+        .stateIn(
+            scope = coroutineScope,
+            started = SharingStarted.Lazily,
+            initialValue = featuredNews
+        )
+
+
+    // LATEST NEWS FLOW
+    private val nextLatestNewsNeededEvents = MutableSharedFlow<Unit>(replay = 1)
+    private val refreshedLatestNewsFlow = MutableSharedFlow<List<News>>()
+    private val loadedLatestNewsListFlow = flow {
+        nextLatestNewsNeededEvents.emit(Unit)
+        nextLatestNewsNeededEvents.collect {
+            val news = getRandomNews()
+            addLatestNews(news)
+            emit(latestNews)
+        }
+    }
+    val latestNewsFlow: StateFlow<List<News>> = loadedLatestNewsListFlow
+        .mergeWith(refreshedLatestNewsFlow)
+        .stateIn(
+            scope = coroutineScope,
+            started = SharingStarted.Lazily,
+            initialValue = latestNews
+        )
+
+
+    // LOAD NEXT NEWS
+    suspend fun loadNextFeaturedNews() {
+        nextFeaturedNewsNeededEvents.emit(Unit)
     }
 
+    suspend fun loadNextLatestNews() {
+        nextLatestNewsNeededEvents.emit(Unit)
+    }
+
+    // NEWS GENERATORS
+    private var featuredNewsAutoIncrement = 0
+    private var latestNewsAutoIncrement = 0
     suspend fun getRandomCatFact(): News {
         val catFactResponse = catFactApiService.getRandomCatFact()
         val catImageResponse = catImageApiService.getRandomCatImage()
-
         val catImageUrl = catImageMapper.mapResponseToUrl(catImageResponse)
-
-        val news = catFactMapper.mapResponseToNews(catFactResponse).copy(
+        return catFactMapper.mapResponseToNews(catFactResponse).copy(
             id = featuredNewsAutoIncrement++,
             imageId = getRandomImage(),
             imageUrl = catImageUrl
         )
-        return news
     }
 
-    fun loadLatestNews(): List<News> {
-        val news = News(
-            id = latestNewsAutoIncrement++,
-            title = getRandomTitle(),
-            text = getRandomText(),
-            imageId = getRandomImage(),
-            publishedDate = getPublishDate()
-        )
-        addLatestNews(news = news)
-        return latestNews
+    fun getRandomNews() = News(
+        id = latestNewsAutoIncrement++,
+        title = getRandomTitle(),
+        text = getRandomText(),
+        imageId = getRandomImage(),
+        publishedDate = getPublishDate()
+    )
+
+    fun addFeaturedNews(news: News) {
+        _featuredNewsList.add(news)
     }
 
-    override fun addFeaturedNews(news: News) {
-        _featuredNews.add(news)
-    }
-
-    override fun addLatestNews(news: News) {
+    fun addLatestNews(news: News) {
         _latestNewsList.add(news)
     }
 
-
-    override fun getFeaturedNews(id: Int): News {
-        val news = _featuredNews.find {
-            it.id == id
-        } ?: throw RuntimeException("Invalid latest news id: $id")
-        return news
+    // MARK NEWS
+    suspend fun markFeaturedNews(news: News) {
+        val postIndex = _featuredNewsList.indexOf(news)
+        _featuredNewsList[postIndex].isViewed = true
+        refreshedFeaturedNewsFlow.emit(featuredNews)
     }
 
-    override fun getLatestNews(id: Int): News {
-        val news = _latestNewsList.find {
-            it.id == id
-        } ?: throw RuntimeException("Invalid latest news id: $id")
-        return news
+    suspend fun markLatestNews(news: News) {
+        val postIndex = _latestNewsList.indexOf(news)
+        _latestNewsList[postIndex].isViewed = true
+        refreshedLatestNewsFlow.emit(latestNews)
     }
 
-    override fun markFeaturedNews(id: Int) {
-        var news = getFeaturedNews(id)
-        _featuredNews.remove(news)
-        news = news.copy(isViewed = true)
-        addFeaturedNews(news = news)
-    }
-
-    override fun markLatestNews(id: Int) {
-        var news = getLatestNews(id)
-        _latestNewsList.remove(news)
-        news = news.copy(isViewed = true)
-        addLatestNews(news = news)
-    }
-
-    private fun markAllFeaturedNews() {
-        val featuredList = featuredNews.toList()
-        featuredList.forEach {
-            markFeaturedNews(it.id)
+    suspend fun markAllFeaturedNews() {
+        for (news in _featuredNewsList) {
+            news.isViewed = true
         }
+        refreshedFeaturedNewsFlow.emit(featuredNews)
     }
 
-    private fun markAllLatestNews() {
-        val latestList = latestNews.toList()
-        latestList.forEach {
-            markLatestNews(it.id)
+    suspend fun markAllLatestNews() {
+        for (news in _latestNewsList) {
+            news.isViewed = true
         }
+        refreshedLatestNewsFlow.emit(latestNews)
     }
 
-    override fun markAllNews() {
+    suspend fun markAllNews() {
         markAllFeaturedNews()
         markAllLatestNews()
     }
 
-    override fun getAllFeaturedNews(): LiveData<List<News>> {
-        TODO("Not yet implemented")
-    }
-
-    override fun getAllLatestNews(): LiveData<List<News>> {
-        TODO("Not yet implemented")
-    }
-
-
+    // RANDOM GENERATORS
     private fun getRandomImage(): Int {
         return when (Random.nextInt(0, 7)) {
             0 -> R.drawable.img_0
@@ -138,7 +160,7 @@ object NewsRepositoryImpl : NewsRepository {
     }
 
     private fun getPublishDate(): Long {
-        return System.currentTimeMillis() - (10000 * latestNewsAutoIncrement)
+        return System.currentTimeMillis() - (100_000 * latestNewsAutoIncrement)
     }
 
     private fun getRandomTitle(): String {
@@ -177,5 +199,4 @@ object NewsRepositoryImpl : NewsRepository {
             else -> "Lorem Ipsum.."
         }
     }
-
 }
