@@ -1,97 +1,94 @@
 package tech.demura.testproject.ui_layer.newsListScreen
 
 import android.text.format.DateUtils
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import tech.demura.testproject.data_layer.repository.NewsRepositoryImpl
 import tech.demura.testproject.domain_layer.news.entites.News
-import tech.demura.testproject.domain_layer.news.use_case.*
+import tech.demura.testproject.extensions.mergeWith
 
 
 class NewsListViewModel : ViewModel() {
-//    private val getAllFeaturedNewsUseCase = getAllFeaturedNewsUseCase(repository)
-//    private val getAllLatestNewsUseCase = getAllLatestNewsUseCase(repository)
-//
-//    private val featuredNews = getAllFeaturedNewsUseCase.getAllNews()
-//    private val latestNews = getAllLatestNewsUseCase.getAllNews()
-
-    private val _featuredNewsState =
-        MutableLiveData<NewsListFeaturedState>(NewsListFeaturedState.Initial)
-    val featuredNewsState: LiveData<NewsListFeaturedState> = _featuredNewsState
-
-    private val _latestNewsState =
-        MutableLiveData<NewsListLatestState>(NewsListLatestState.Initial)
-    val latestNewsState: LiveData<NewsListLatestState> = _latestNewsState
 
     private val repository = NewsRepositoryImpl
 
-    private val markFeaturedNewsUseCase = markFeaturedNewsUseCase(repository)
-    private val markLatestNewsUseCase = markLatestNewsUseCase(repository)
-    private val markAllNewsUseCase = markAllNewsUseCase(repository)
-
-    init {
-        _latestNewsState.value = NewsListLatestState.Loading
-        loadLatestNews()
-        _featuredNewsState.value = NewsListFeaturedState.Loading
-        loadFeaturedNews()
-    }
-
-    private fun loadFeaturedNews() {
-        viewModelScope.launch {
-            repository.loadCatFacts()
-            updateFeaturedNewsState(false)
+    //FEATURED NEWS FLOW
+    private val loadNextFeaturedNewsEvent = MutableSharedFlow<Unit>()
+    private val featuredNewsFlow = repository.featuredNewsFlow
+    private val loadNextFeaturedNewsFlow = flow {
+        loadNextFeaturedNewsEvent.collect {
+            emit(
+                NewsListFeaturedState.FeaturedNews(
+                    featuredNews = featuredNewsFlow.value,
+                    featuredNewsIsLoading = true
+                )
+            )
         }
     }
+    val featuredNewsState = featuredNewsFlow
+        .filter { it.isNotEmpty() }
+        .map { NewsListFeaturedState.FeaturedNews(featuredNews = it) }
+        .onStart { NewsListFeaturedState.Loading }
+        .mergeWith(loadNextFeaturedNewsFlow)
 
-    private fun loadLatestNews() {
-        viewModelScope.launch {
-            repository.loadLatestNews()
-            updateLatestNewsState(false)
+    // LATEST NEWS FLOW
+    private val loadNextLatestNewsEvent = MutableSharedFlow<Unit>()
+    private val latestNewsFlow = repository.latestNewsFlow
+    private val loadNextLatestNewsFlow = flow {
+        loadNextLatestNewsEvent.collect {
+            emit(
+                NewsListLatestState.LatestNews(
+                    latestNews = latestNewsFlow.value,
+                    latestNewsIsLoading = true
+                )
+            )
         }
     }
+    val latestNewsState = latestNewsFlow
+        .filter { it.isNotEmpty() }
+        .map { NewsListLatestState.LatestNews(latestNews = it) }
+        .onStart { NewsListLatestState.Loading }
+        .mergeWith(loadNextLatestNewsFlow)
 
+
+    // LOAD NEXT
     fun loadNextFeaturedNews() {
-        updateFeaturedNewsState(true)
-        loadFeaturedNews()
+        viewModelScope.launch {
+            loadNextFeaturedNewsEvent.emit(Unit)
+            repository.loadNextFeaturedNews()
+        }
     }
 
     fun loadNextLatestdNews() {
-        updateLatestNewsState(true)
-        loadLatestNews()
+        viewModelScope.launch {
+            loadNextLatestNewsEvent.emit(Unit)
+            repository.loadNextLatestNews()
+        }
     }
 
+    // MARK NEWS
     fun markFeaturedNews(news: News) {
-        markFeaturedNewsUseCase.markNews(news.id)
-        updateFeaturedNewsState(false)
+        viewModelScope.launch {
+            repository.markFeaturedNews(news)
+        }
     }
 
     fun markLatestNews(news: News) {
-        markLatestNewsUseCase.markNews(news.id)
-        updateLatestNewsState(false)
+        viewModelScope.launch {
+            repository.markLatestNews(news)
+        }
     }
 
     fun markAllNews() {
-        markAllNewsUseCase.markAllNews()
-        updateLatestNewsState(false)
+        viewModelScope.launch {
+            repository.markAllNews()
+        }
     }
 
-    private fun updateFeaturedNewsState(isLoading: Boolean) {
-        _featuredNewsState.value = NewsListFeaturedState.FeaturedNews(
-            featuredNews = repository.featuredNews.sortedBy { it.id },
-            featuredNewsIsLoading = isLoading
-        )
-    }
 
-    private fun updateLatestNewsState(isLoading: Boolean) {
-        _latestNewsState.value = NewsListLatestState.LatestNews(
-            latestNews = repository.latestNews.sortedBy { it.id },
-            latestNewsIsLoading = isLoading
-        )
-    }
-
+    // TODO ("Переделать нормально")
     fun getPublishTime(news: News): String {
         val currentTime = System.currentTimeMillis()
         val publishTime = news.publishedDate

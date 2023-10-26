@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -26,13 +26,12 @@ import tech.demura.testproject.domain_layer.news.entites.News
 fun NewsListScreen(
     onNewsClick: (news: News) -> Unit
 ) {
-
     val viewModel: NewsListViewModel = viewModel()
 
     val featuredNewsState =
-        viewModel.featuredNewsState.observeAsState(NewsListFeaturedState.Initial)
+        viewModel.featuredNewsState.collectAsState(NewsListFeaturedState.Initial)
     val latestNewsState =
-        viewModel.latestNewsState.observeAsState(NewsListLatestState.Initial)
+        viewModel.latestNewsState.collectAsState(NewsListLatestState.Initial)
 
     val currentFeaturedNewsState = featuredNewsState.value
     val currentLatestNewsState = latestNewsState.value
@@ -70,6 +69,7 @@ fun NewsListScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            // FEATURED NEWS PART
             Text(
                 text = stringResource(R.string.featured_news),
                 fontSize = 24.sp,
@@ -77,9 +77,12 @@ fun NewsListScreen(
                 maxLines = 1
             )
             Spacer(modifier = Modifier.height(8.dp))
-
             when (currentFeaturedNewsState) {
-                is NewsListFeaturedState.Initial -> {}
+                is NewsListFeaturedState.Initial -> {
+                    Box(modifier = Modifier.size(220.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colors.onPrimary)
+                    }
+                }
 
                 is NewsListFeaturedState.Loading -> {
                     Box(modifier = Modifier.size(220.dp), contentAlignment = Alignment.Center) {
@@ -104,6 +107,7 @@ fun NewsListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // LATEST NEWS PART
             Text(
                 text = stringResource(R.string.latest_news),
                 fontStyle = FontStyle.Italic,
@@ -129,10 +133,8 @@ fun NewsListScreen(
                     LatestNews(
                         latestNews = currentLatestNewsState.latestNews,
                         nextDataIsLoading = currentLatestNewsState.latestNewsIsLoading,
-                        loadData = {
-                            viewModel.loadNextLatestdNews()
-                        },
-                        publishTime = { viewModel.getPublishTime(it) },
+                        loadData = viewModel::loadNextLatestdNews,
+                        publishTime = viewModel::getPublishTime,
                         onNewsClick = {
                             viewModel.markLatestNews(it)
                             onNewsClick(it)
