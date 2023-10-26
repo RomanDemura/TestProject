@@ -11,6 +11,7 @@ import tech.demura.testproject.data_layer.cat_image_api.network.CatImageApiFacto
 import tech.demura.testproject.domain_layer.news.entites.News
 import tech.demura.testproject.domain_layer.news.repository.NewsRepository
 import tech.demura.testproject.extensions.mergeWith
+import java.util.*
 import kotlin.random.Random
 
 object NewsRepositoryImpl : NewsRepository {
@@ -55,8 +56,8 @@ object NewsRepositoryImpl : NewsRepository {
 
 
     // LATEST NEWS FLOW
-    private val nextLatestNewsNeededEvents = MutableSharedFlow<Unit>(replay = 1)
     private val refreshedLatestNewsFlow = MutableSharedFlow<List<News>>()
+    private val nextLatestNewsNeededEvents = MutableSharedFlow<Unit>(replay = 1)
     private val loadedLatestNewsListFlow = flow {
         nextLatestNewsNeededEvents.emit(Unit)
         nextLatestNewsNeededEvents.collect {
@@ -116,26 +117,30 @@ object NewsRepositoryImpl : NewsRepository {
     // MARK NEWS
     suspend fun markFeaturedNews(news: News) {
         val postIndex = _featuredNewsList.indexOf(news)
-        _featuredNewsList[postIndex].isViewed = true
+        val markedNews = news.copy(isViewed = true)
+        _featuredNewsList[postIndex] =  markedNews
         refreshedFeaturedNewsFlow.emit(featuredNews)
     }
 
     suspend fun markLatestNews(news: News) {
         val postIndex = _latestNewsList.indexOf(news)
-        _latestNewsList[postIndex].isViewed = true
+        val markedNews = news.copy(isViewed = true)
+        _latestNewsList[postIndex] = markedNews
         refreshedLatestNewsFlow.emit(latestNews)
     }
 
     suspend fun markAllFeaturedNews() {
-        for (news in _featuredNewsList) {
-            news.isViewed = true
+        for (postId in 0 until _featuredNewsList.size) {
+            val markedNews = _featuredNewsList[postId].copy(isViewed = true)
+            _featuredNewsList[postId] = markedNews
         }
         refreshedFeaturedNewsFlow.emit(featuredNews)
     }
 
     suspend fun markAllLatestNews() {
-        for (news in _latestNewsList) {
-            news.isViewed = true
+        for (postId in 0 until _latestNewsList.size) {
+            val markedNews = _latestNewsList[postId].copy(isViewed = true)
+            _latestNewsList[postId] = markedNews
         }
         refreshedLatestNewsFlow.emit(latestNews)
     }
@@ -159,8 +164,8 @@ object NewsRepositoryImpl : NewsRepository {
         }
     }
 
-    private fun getPublishDate(): Long {
-        return System.currentTimeMillis() - (100_000 * latestNewsAutoIncrement)
+    private fun getPublishDate(): Date {
+        return Date(System.currentTimeMillis() - (100_000 * latestNewsAutoIncrement))
     }
 
     private fun getRandomTitle(): String {

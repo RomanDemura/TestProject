@@ -2,7 +2,10 @@ package tech.demura.testproject.ui_layer.newsListScreen
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -21,21 +24,15 @@ import tech.demura.testproject.domain_layer.news.entites.News
 @Composable
 fun FeaturedNewsCard(
     news: News,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
-            .size(220.dp)
+        modifier = modifier
             .clickable { onClick() },
         elevation = 8.dp,
-        border = BorderStroke(1.dp, Color.DarkGray)
+        border = BorderStroke(1.dp, Color.DarkGray),
     ) {
-
-//        Image(
-//            painter = painterResource(id = news.imageId),
-//            contentDescription = null,
-//            contentScale = ContentScale.Crop
-//        )
         AsyncImage(
             model = news.imageUrl,
             contentScale = ContentScale.Crop,
@@ -59,7 +56,6 @@ fun FeaturedNewsCard(
                         blurRadius = 12f
                     )
                 )
-
             )
         }
     }
