@@ -3,6 +3,7 @@ package tech.demura.testproject.domain_layer.news.entites
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import tech.demura.testproject.R
+import java.util.*
 
 @Parcelize
 data class News(
@@ -12,7 +13,7 @@ data class News(
     val imageId: Int = R.drawable.ic_launcher_background,
     val imageUrl: String = "",
     var isViewed: Boolean = false,
-    var publishedDate: Long = System.currentTimeMillis()
+    var publishedDate: Date = Date()
 
     ): Parcelable {
     companion object{
