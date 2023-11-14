@@ -2,28 +2,32 @@ package tech.demura.testproject.data_layer.repository
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import tech.demura.testproject.R
 import tech.demura.testproject.data_layer.cat_fact_api.mapper.CatFactMapper
-import tech.demura.testproject.data_layer.cat_fact_api.network.CatFactApiFactory
+import tech.demura.testproject.data_layer.cat_fact_api.network.CatFactApiService
 import tech.demura.testproject.data_layer.cat_image_api.mapper.CatImageMapper
-import tech.demura.testproject.data_layer.cat_image_api.network.CatImageApiFactory
+import tech.demura.testproject.data_layer.cat_image_api.network.CatImageApiService
 import tech.demura.testproject.domain_layer.news.entites.News
 import tech.demura.testproject.domain_layer.news.repository.NewsRepository
 import tech.demura.testproject.extensions.mergeWith
-import java.util.*
+import java.util.Date
+import javax.inject.Inject
 import kotlin.random.Random
 
-object NewsRepositoryImpl : NewsRepository {
+class NewsRepositoryImpl @Inject constructor(
+    private val catFactApiService: CatFactApiService,
+    private val catFactMapper: CatFactMapper,
+    private val catImageApiService: CatImageApiService,
+    private val catImageMapper: CatImageMapper
+
+) : NewsRepository {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
-
-    // RETROFIT
-    private val catFactApiService = CatFactApiFactory.apiService
-    private val catFactMapper = CatFactMapper()
-
-    private val catImageApiService = CatImageApiFactory.apiService
-    private val catImageMapper = CatImageMapper()
 
     // NEWS CONTAINERS
     private val _featuredNewsList = mutableListOf<News>()
@@ -46,7 +50,7 @@ object NewsRepositoryImpl : NewsRepository {
             emit(featuredNews)
         }
     }
-    val featuredNewsFlow: StateFlow<List<News>> = loadedFeaturedNewsListFlow
+    private val featuredNewsFlow: StateFlow<List<News>> = loadedFeaturedNewsListFlow
         .mergeWith(refreshedFeaturedNewsFlow)
         .stateIn(
             scope = coroutineScope,
@@ -66,7 +70,7 @@ object NewsRepositoryImpl : NewsRepository {
             emit(latestNews)
         }
     }
-    val latestNewsFlow: StateFlow<List<News>> = loadedLatestNewsListFlow
+    private val latestNewsFlow: StateFlow<List<News>> = loadedLatestNewsListFlow
         .mergeWith(refreshedLatestNewsFlow)
         .stateIn(
             scope = coroutineScope,
@@ -74,62 +78,63 @@ object NewsRepositoryImpl : NewsRepository {
             initialValue = latestNews
         )
 
+    override fun getFeaturedNewsFlow(): StateFlow<List<News>> = featuredNewsFlow
+
+    override fun getLatestNewsFlow(): StateFlow<List<News>> = latestNewsFlow
+    override fun getNewsById(id: Int): News {
+        val featuredNews = featuredNews.find { news ->
+            news.id == id
+        }
+        if (featuredNews != null)
+            return featuredNews
+
+        val latestNews = latestNews.find { news ->
+            news.id == id
+        }
+        if (latestNews != null)
+            return latestNews
+        else throw RuntimeException("Illegal news id")
+    }
 
     // LOAD NEXT NEWS
-    suspend fun loadNextFeaturedNews() {
+    override suspend fun loadNextFeaturedNews() {
         nextFeaturedNewsNeededEvents.emit(Unit)
     }
 
-    suspend fun loadNextLatestNews() {
+    override suspend fun loadNextLatestNews() {
         nextLatestNewsNeededEvents.emit(Unit)
     }
 
-    // NEWS GENERATORS
-    private var featuredNewsAutoIncrement = 0
-    private var latestNewsAutoIncrement = 0
-    suspend fun getRandomCatFact(): News {
-        val catFactResponse = catFactApiService.getRandomCatFact()
-        val catImageResponse = catImageApiService.getRandomCatImage()
-        val catImageUrl = catImageMapper.mapResponseToUrl(catImageResponse)
-        return catFactMapper.mapResponseToNews(catFactResponse).copy(
-            id = featuredNewsAutoIncrement++,
-            imageId = getRandomImage(),
-            imageUrl = catImageUrl
-        )
-    }
 
-    fun getRandomNews() = News(
-        id = latestNewsAutoIncrement++,
-        title = getRandomTitle(),
-        text = getRandomText(),
-        imageId = getRandomImage(),
-        publishedDate = getPublishDate()
-    )
-
-    fun addFeaturedNews(news: News) {
+    private fun addFeaturedNews(news: News) {
         _featuredNewsList.add(news)
     }
 
-    fun addLatestNews(news: News) {
+    private fun addLatestNews(news: News) {
         _latestNewsList.add(news)
     }
 
     // MARK NEWS
-    suspend fun markFeaturedNews(news: News) {
+    override suspend fun markFeaturedNews(news: News) {
         val postIndex = _featuredNewsList.indexOf(news)
         val markedNews = news.copy(isViewed = true)
-        _featuredNewsList[postIndex] =  markedNews
+        _featuredNewsList[postIndex] = markedNews
         refreshedFeaturedNewsFlow.emit(featuredNews)
     }
 
-    suspend fun markLatestNews(news: News) {
+    override suspend fun markLatestNews(news: News) {
         val postIndex = _latestNewsList.indexOf(news)
         val markedNews = news.copy(isViewed = true)
         _latestNewsList[postIndex] = markedNews
         refreshedLatestNewsFlow.emit(latestNews)
     }
 
-    suspend fun markAllFeaturedNews() {
+    override suspend fun markAllNews() {
+        markAllFeaturedNews()
+        markAllLatestNews()
+    }
+
+    private suspend fun markAllFeaturedNews() {
         for (postId in 0 until _featuredNewsList.size) {
             val markedNews = _featuredNewsList[postId].copy(isViewed = true)
             _featuredNewsList[postId] = markedNews
@@ -137,7 +142,7 @@ object NewsRepositoryImpl : NewsRepository {
         refreshedFeaturedNewsFlow.emit(featuredNews)
     }
 
-    suspend fun markAllLatestNews() {
+    private suspend fun markAllLatestNews() {
         for (postId in 0 until _latestNewsList.size) {
             val markedNews = _latestNewsList[postId].copy(isViewed = true)
             _latestNewsList[postId] = markedNews
@@ -145,10 +150,29 @@ object NewsRepositoryImpl : NewsRepository {
         refreshedLatestNewsFlow.emit(latestNews)
     }
 
-    suspend fun markAllNews() {
-        markAllFeaturedNews()
-        markAllLatestNews()
+
+    // NEWS GENERATORS
+    private var featuredNewsAutoIncrement = 0
+    private var latestNewsAutoIncrement = 0
+    private var autoIncrement = 0
+    private suspend fun getRandomCatFact(): News {
+        val catFactResponse = catFactApiService.getRandomCatFact()
+        val catImageResponse = catImageApiService.getRandomCatImage()
+        val catImageUrl = catImageMapper.mapResponseToUrl(catImageResponse)
+        return catFactMapper.mapResponseToNews(catFactResponse).copy(
+            id = autoIncrement++,
+            imageId = getRandomImage(),
+            imageUrl = catImageUrl
+        )
     }
+
+    private fun getRandomNews() = News(
+        id = autoIncrement++,
+        title = getRandomTitle(),
+        text = getRandomText(),
+        imageId = getRandomImage(),
+        publishedDate = getPublishDate()
+    )
 
     // RANDOM GENERATORS
     private fun getRandomImage(): Int {
@@ -198,9 +222,11 @@ object NewsRepositoryImpl : NewsRepository {
                     "Donec sit amet augue id nibh euismod condimentum eu id libero. Nam tincidunt eleifend nisl, eget commodo augue tristique at. Maecenas suscipit, mi sed consequat commodo, nunc massa venenatis nibh, pharetra mattis erat tortor quis urna. Nunc urna sem, pretium ac dui nec, tincidunt condimentum nibh. Cras sit amet varius neque. Mauris efficitur porta pulvinar. Vestibulum varius odio enim, et mattis nulla tincidunt eu. Etiam tincidunt nisl quis risus congue vestibulum. Phasellus accumsan tincidunt nisi, sit amet elementum ligula.\n" +
                     "\n" +
                     "Quisque facilisis fringilla massa, sed gravida erat pulvinar quis. In convallis mattis mauris vitae vehicula. Vestibulum ac varius sem, ut ultrices massa. Donec nec finibus erat. Quisque non odio at elit porttitor gravida. Fusce scelerisque turpis non egestas malesuada. In vel elit ut est tempor luctus. Phasellus dui urna, faucibus a justo sed, dapibus condimentum mauris. Proin ut sagittis lectus, sit amet tempor eros. Curabitur mi augue, lacinia ut nulla vitae, scelerisque elementum ligula. Pellentesque auctor mauris lacinia sollicitudin sagittis."
+
             1 -> "Mauris molestie lacus vel neque dapibus, eu eleifend neque consequat. Cras scelerisque lacinia congue. Maecenas luctus sagittis enim sit amet bibendum. Nam eleifend eleifend dolor, aliquet consectetur nisi. Duis commodo diam dolor, convallis cursus sapien bibendum volutpat. Morbi tempus turpis ac consectetur finibus. Aliquam convallis pretium sapien ut luctus. Donec eu accumsan nibh. Mauris eu magna sed neque hendrerit sodales vitae et metus. Phasellus lacinia, lorem vitae pulvinar ultricies, felis justo placerat arcu, ac faucibus velit odio id justo.\n" +
                     "\n" +
                     "Donec lacus metus, condimentum eu purus ac, imperdiet pulvinar enim. Sed a tortor eget augue pretium bibendum vitae non velit. Nunc a nisi turpis. Vestibulum sapien nisi, elementum id eros in, auctor tempus ante. Duis rhoncus viverra elit, in pulvinar lacus blandit a. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Duis quam est, sollicitudin nec dui in, dapibus tempus sapien. Quisque non vehicula lacus. Aenean at efficitur nulla. Praesent felis felis, tincidunt ut dolor sagittis, hendrerit fermentum augue. Pellentesque non gravida nisl. Duis sagittis ex mi, et hendrerit tortor aliquam vel. Quisque efficitur ultrices enim ut varius. Phasellus dignissim eros eget diam lacinia consectetur id et leo."
+
             else -> "Lorem Ipsum.."
         }
     }

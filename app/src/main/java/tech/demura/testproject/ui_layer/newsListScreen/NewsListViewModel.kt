@@ -10,22 +10,38 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import tech.demura.testproject.data_layer.repository.NewsRepositoryImpl
 import tech.demura.testproject.domain_layer.news.entites.News
+import tech.demura.testproject.domain_layer.news.entites.NewsListFeaturedState
+import tech.demura.testproject.domain_layer.news.entites.NewsListLatestState
+import tech.demura.testproject.domain_layer.news.use_case.GetFeaturedNewsFlowUseCase
+import tech.demura.testproject.domain_layer.news.use_case.GetLatestNewsFlowUseCase
+import tech.demura.testproject.domain_layer.news.use_case.LoadNextFeaturedNewsUseCase
+import tech.demura.testproject.domain_layer.news.use_case.LoadNextLatestNewsUseCase
+import tech.demura.testproject.domain_layer.news.use_case.MarkAllNewsUseCase
+import tech.demura.testproject.domain_layer.news.use_case.MarkFeaturedNewsUseCase
+import tech.demura.testproject.domain_layer.news.use_case.MarkLatestNewsUseCase
 import tech.demura.testproject.extensions.getTimeAgo
 import tech.demura.testproject.extensions.mergeWith
+import javax.inject.Inject
 
 
-class NewsListViewModel : ViewModel() {
+class NewsListViewModel @Inject constructor(
+    private val getFeaturedNewsFlowUseCase: GetFeaturedNewsFlowUseCase,
+    private val getLatestNewsFlowUseCase: GetLatestNewsFlowUseCase,
+    private val loadNextFeaturedNewsUseCase: LoadNextFeaturedNewsUseCase,
+    private val loadNextLatestNewsUseCase: LoadNextLatestNewsUseCase,
+    private val markFeaturedNewsUseCase: MarkFeaturedNewsUseCase,
+    private val markLatestNewsUseCase: MarkLatestNewsUseCase,
+    private val markAllNewsUseCase: MarkAllNewsUseCase,
+) : ViewModel() {
 
-    private val repository = NewsRepositoryImpl
     private val exceptionHandler = CoroutineExceptionHandler { _, _ ->
         Log.d("NewsListViewModel", "Caught Exception")
     }
 
     //FEATURED NEWS FLOW
     private val loadNextFeaturedNewsEvent = MutableSharedFlow<Unit>()
-    private val featuredNewsFlow = repository.featuredNewsFlow
+    private val featuredNewsFlow = getFeaturedNewsFlowUseCase()
     private val loadNextFeaturedNewsFlow = flow {
         loadNextFeaturedNewsEvent.collect {
             emit(
@@ -44,7 +60,7 @@ class NewsListViewModel : ViewModel() {
 
     // LATEST NEWS FLOW
     private val loadNextLatestNewsEvent = MutableSharedFlow<Unit>()
-    private val latestNewsFlow = repository.latestNewsFlow
+    private val latestNewsFlow = getLatestNewsFlowUseCase()
     private val loadNextLatestNewsFlow = flow {
         loadNextLatestNewsEvent.collect {
             emit(
@@ -66,33 +82,33 @@ class NewsListViewModel : ViewModel() {
     fun loadNextFeaturedNews() {
         viewModelScope.launch(exceptionHandler) {
             loadNextFeaturedNewsEvent.emit(Unit)
-            repository.loadNextFeaturedNews()
+            loadNextFeaturedNewsUseCase()
         }
     }
 
     fun loadNextLatestdNews() {
         viewModelScope.launch(exceptionHandler) {
             loadNextLatestNewsEvent.emit(Unit)
-            repository.loadNextLatestNews()
+            loadNextLatestNewsUseCase()
         }
     }
 
     // MARK NEWS
     fun markFeaturedNews(news: News) {
         viewModelScope.launch(exceptionHandler) {
-            repository.markFeaturedNews(news)
+            markFeaturedNewsUseCase(news)
         }
     }
 
     fun markLatestNews(news: News) {
         viewModelScope.launch(exceptionHandler) {
-            repository.markLatestNews(news)
+            markLatestNewsUseCase(news)
         }
     }
 
     fun markAllNews() {
         viewModelScope.launch(exceptionHandler) {
-            repository.markAllNews()
+            markAllNewsUseCase()
         }
     }
 

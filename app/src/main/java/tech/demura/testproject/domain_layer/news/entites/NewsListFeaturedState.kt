@@ -1,8 +1,6 @@
-package tech.demura.testproject.ui_layer.newsListScreen
+package tech.demura.testproject.domain_layer.news.entites
 
-import tech.demura.testproject.domain_layer.news.entites.News
-
-sealed class NewsListFeaturedState() {
+sealed class NewsListFeaturedState  {
     object Initial : NewsListFeaturedState()
     object Loading: NewsListFeaturedState()
     data class FeaturedNews(

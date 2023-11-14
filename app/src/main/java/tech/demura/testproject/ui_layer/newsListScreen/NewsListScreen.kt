@@ -25,14 +25,18 @@ import androidx.compose.ui.util.lerp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.demura.testproject.R
 import tech.demura.testproject.domain_layer.news.entites.News
+import tech.demura.testproject.domain_layer.news.entites.NewsListFeaturedState
+import tech.demura.testproject.domain_layer.news.entites.NewsListLatestState
+import tech.demura.testproject.ui_layer.ViewModelFactory
 import kotlin.math.absoluteValue
 
 
 @Composable
 fun NewsListScreen(
+    viewModelFactory: ViewModelFactory,
     onNewsClick: (news: News) -> Unit
 ) {
-    val viewModel: NewsListViewModel = viewModel()
+    val viewModel: NewsListViewModel = viewModel(factory = viewModelFactory)
 
     val featuredNewsState =
         viewModel.featuredNewsState.collectAsState(NewsListFeaturedState.Initial)

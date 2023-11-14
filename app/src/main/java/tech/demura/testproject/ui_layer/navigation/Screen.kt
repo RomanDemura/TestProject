@@ -11,7 +11,7 @@ sealed class Screen(
     object News : Screen(ROUTE_NEWS) {
         private const val ROUTE_FOR_ARGS = "news"
         fun getRouteWithNews(news: domainNews): String {
-            val newsJson = Gson().toJson(news)
+            val newsJson = Gson().toJson(news.id)
             return "$ROUTE_FOR_ARGS/${newsJson.encode()}"
         }
     }
