@@ -1,8 +1,6 @@
-package tech.demura.testproject.ui_layer.newsListScreen
+package tech.demura.testproject.domain_layer.news.entites
 
-import tech.demura.testproject.domain_layer.news.entites.News
-
-sealed class NewsListLatestState() {
+sealed class NewsListLatestState {
 
     object Initial : NewsListLatestState()
 

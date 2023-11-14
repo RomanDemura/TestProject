@@ -6,12 +6,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import com.google.gson.Gson
-import tech.demura.testproject.domain_layer.news.entites.News
 
 fun NavGraphBuilder.MainScreenNavGraph(
     newsListScreenContent: @Composable () -> Unit,
-    newsScreenContent: @Composable (news: News) -> Unit
+    newsScreenContent: @Composable (newsId: Int) -> Unit
 ) {
     navigation(
         startDestination = Screen.NewsList.route,
@@ -24,13 +22,12 @@ fun NavGraphBuilder.MainScreenNavGraph(
         composable(route = Screen.News.route,
             arguments = listOf(
                 navArgument(name = Screen.KEY_NEWS) {
-                    type = NavType.StringType
+                    type = NavType.IntType
                 }
             )
         ) {
-            val newsJson = it.arguments?.getString(Screen.KEY_NEWS) ?: ""
-            val news = Gson().fromJson(newsJson, News::class.java)
-            newsScreenContent(news)
+            val newsId = it.arguments?.getInt(Screen.KEY_NEWS) ?: 0
+            newsScreenContent(newsId)
         }
     }
 }

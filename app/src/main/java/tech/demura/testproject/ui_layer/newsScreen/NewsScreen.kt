@@ -2,10 +2,21 @@ package tech.demura.testproject.ui_layer.newsScreen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
@@ -14,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -21,15 +33,24 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import tech.demura.testproject.R
 import tech.demura.testproject.domain_layer.news.entites.News
+import tech.demura.testproject.ui_layer.NewsApplication
 
 @Composable
 fun NewsScreen(
-    news: News,
+    newsId: Int,
     onBackPressed: () -> Unit
 ) {
+    val component = (LocalContext.current.applicationContext as NewsApplication)
+        .applicationComponent
+        .getNewsScreenComponentFactory()
+        .create(newsId)
+
+    val viewModel: NewsViewModel = viewModel(factory = component.getViewModelFactory())
+
     BackHandler {
         onBackPressed()
     }
@@ -50,7 +71,7 @@ fun NewsScreen(
         }
     ) { paddingValues ->
         News(
-            news = news,
+            news = viewModel.getNews(),
             paddingValues = paddingValues
         )
     }

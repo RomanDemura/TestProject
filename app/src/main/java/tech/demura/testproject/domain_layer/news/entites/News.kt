@@ -3,10 +3,10 @@ package tech.demura.testproject.domain_layer.news.entites
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import tech.demura.testproject.R
-import java.util.*
+import java.util.Date
 
 @Parcelize
-data class News(
+data class News (
     var id: Int = UNDEFINED_ID,
     val title: String = "Title",
     val text: String = "Text",

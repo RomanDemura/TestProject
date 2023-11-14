@@ -10,15 +10,16 @@ import tech.demura.testproject.domain_layer.news.entites.News
 class NavigationState(
     val navHostController: NavHostController
 ) {
-    fun navigateTo(route: String){
-        navHostController.navigate(route = route){
-            popUpTo(navHostController.graph.findStartDestination().id){
+    fun navigateTo(route: String) {
+        navHostController.navigate(route = route) {
+            popUpTo(navHostController.graph.findStartDestination().id) {
                 saveState = true
             }
             launchSingleTop = true
         }
     }
-    fun navigateToNews(news: News){
+
+    fun navigateToNews(news: News) {
         navHostController.navigate(Screen.News.getRouteWithNews(news))
     }
 }
@@ -26,7 +27,7 @@ class NavigationState(
 @Composable
 fun rememberNavigationState(
     navHostController: NavHostController = rememberNavController()
-): NavigationState{
+): NavigationState {
     return remember {
         NavigationState(navHostController)
     }
